@@ -17,7 +17,7 @@
 
 | # | 文件 | 职责 | 可否调用 WoW API |
 |---|---|---|---|
-| 1 | `AutoSpellQueue_Locale.lua` | enUS/zhCN/zhTW 三语键表，设置 `ns.L(key)`（键数不写死：`spec_locale` 保证三语键集一致，取数用 `node tools/run-tests.mjs`） | 仅 `GetLocale()` |
+| 1 | `AutoSpellQueue_Locale.lua` | enUS/zhCN/zhTW/deDE 四语键表，设置 `ns.L(key)`（键数不写死：`spec_locale` 保证四语键集一致，取数用 `node tools/run-tests.mjs`） | 仅 `GetLocale()` |
 | 2 | `AutoSpellQueue_Formula.lua` | 纯计算：专精 / 延迟 / 场景 → 目标值 | **禁止** |
 | 3 | `AutoSpellQueue_Latency.lua` | 纯算法：延迟平滑、抖动估计 → 自适应余量与写入阈值 | **禁止** |
 | 4 | `AutoSpellQueue_CVar.lua` | 唯一读写 `SpellQueueWindow` 的地方，环境可注入 | 通过 `env` 表 |
@@ -112,12 +112,12 @@ threshold = clamp(本机平时延迟 + 60ms, 120ms, 250ms)
 
 | 用途 | 取值 | 说明 |
 |---|---|---|
-| 界面显示名（面板标题、提示标题、聊天前缀） | `ns.L("ADDON_TITLE")` | zhCN/zhTW = `施法容限`，enUS = `Auto Spell Queue` |
-| `.toc` 插件列表名 | `## Title` / `## Title-zhCN` / `## Title-zhTW` | 必须与 `ADDON_TITLE` 三语取值逐字一致（`spec_locale` 断言） |
+| 界面显示名（面板标题、提示标题、聊天前缀） | `ns.L("ADDON_TITLE")` | zhCN/zhTW = `施法容限`，enUS/deDE = `Auto Spell Queue` |
+| `.toc` 插件列表名 | `## Title` / `## Title-zhCN` / `## Title-zhTW` / `## Title-deDE` | 必须与 `ADDON_TITLE` 四语取值逐字一致（`spec_locale` 断言） |
 | 设置分类内部名 / ID（`panel.name`、`RegisterCanvasLayoutCategory` 第三个参数） | 常量 `AutoSpellQueue`（= 文件夹名，来自 `...` 的第一个参数） | **不得随语言变化**：客户端用它把页面挂到本插件下并重新打开，也是 `OpenToCategory` 的 ID |
 | 存档变量 | `AutoSpellQueueDB`（+ 兼容读取 `Tate_ASQDB`） | 同上，恒定 |
 
-> 实测踩坑：语言表的值顺序是 `{ zhCN, zhTW, enUS }`（见文件头注释）。第一次加 `ADDON_TITLE` 时
+> 实测踩坑：语言表的值顺序是 `{ zhCN, zhTW, enUS, deDE }`（见文件头注释）。第一次加 `ADDON_TITLE` 时
 > 按 `{ enUS, zhCN, zhTW }` 写了，中文客户端会显示成英文名——新加的「插件显示名」用例当场抓到。
 
 ### 状态条悬停提示的摆位（必须让开鼠标，且四个边角都不能出屏）
@@ -384,7 +384,7 @@ Core.Init()                       -- 创建事件帧（加载时已自动调用�
 
 ## 6. Locale 契约
 
-`ns.L = function(key) ... end`，提供 **enUS（必备）**、`zhCN`、`zhTW` 三套字符串，**键集必须完全一致**。
+`ns.L = function(key) ... end`，提供 **enUS（必备）**、`zhCN`、`zhTW`、`deDE` 四套字符串，**键集必须完全一致**。
 未列出的语言回退 enUS；enUS 也缺才回退 key 本身。
 
 核心直接使用的键：`CHAT_ERROR`（参数为失败原因），以及 §6 的 7 个 `ERR_*`。
@@ -403,6 +403,7 @@ Core.Init()                       -- 创建事件帧（加载时已自动调用�
   三条会影响测试语义的建模前提（改动会波及整份测试）：新建 frame 默认「已显示」；`frame.name` 会被 Settings API 当作标题；
   **FontString 没有字体时 `SetText` 会抛错**（与客户端一致，见 `tests/REGRESSIONS.md` 第 13 条）。
 - **`tools/run-tests.mjs`**：按 `.toc` 顺序加载 6 个运行期文件（共享同一个 `ns`）后执行 `tests/run.lua`。
+  用 `node tools/run-tests.mjs --locale=deDE` 验证德语界面；默认语言为 `enUS`。
 - **`tools/verify.ps1`**：① 语法 + 双兼容 lint ② 单测 ③ 结构与版本一致性 ④（`-Package`）打包。
   任何一步失败都 exit 1；结构与版本检查包含 `.toc` 的版本号 / Interface / SavedVariables / 加载顺序（6 个 .lua）、
   `CHANGELOG` 最新条目 == `.toc`、`README` 提到该版本、无残留 `Tate_ASQ*` 文件名。

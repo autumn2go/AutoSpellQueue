@@ -2,11 +2,11 @@
 --  tests/spec_locale.lua -- ns.L / ns.LOCALES
 --
 --  The locale contract (AutoSpellQueue_Locale.lua header):
---    * enUS, zhCN and zhTW carry the SAME, COMPLETE key set;
+--    * enUS, zhCN, zhTW and deDE carry the SAME, COMPLETE key set;
 --    * any other client locale falls back to enUS;
 --    * only if enUS is missing the key does ns.L return the key itself;
---    * the three tables come from one source of truth, so a missing or drifting
---      translation is impossible by construction.
+--    * the four tables come from one source of truth; tests catch missing
+--      translations and formatting mismatches.
 --
 --  This file locks that down, plus one thing the contract does not cover by
 --  itself: every key the UI and the core actually ask for must exist, otherwise
@@ -60,10 +60,10 @@ end
 local locales = ns.LOCALES
 local fallbackKeys = {}
 
-T.test("ns.L 是函数，ns.LOCALES 三套表都存在", function()
+T.test("ns.L 是函数，ns.LOCALES 四套表都存在", function()
     T.eq(type(ns.L), "function", "Locale 必须设置 ns.L")
     T.eq(type(locales), "table", "Locale 必须导出 ns.LOCALES")
-    for _, name in ipairs({ "enUS", "zhCN", "zhTW" }) do
+    for _, name in ipairs({ "enUS", "zhCN", "zhTW", "deDE" }) do
         T.eq(type(locales[name]), "table", "ns.LOCALES." .. name .. " 必须是表")
     end
     fallbackKeys = SortedKeys(locales.enUS)
@@ -74,10 +74,12 @@ T.test("插件显示名：中文界面必须是「施法容限」，英文界面
     local zh = LoadLocale("zhCN")
     local tw = LoadLocale("zhTW")
     local en = LoadLocale("enUS")
+    local de = LoadLocale("deDE")
 
     T.eq(zh.L("ADDON_TITLE"), "施法容限", "zhCN 玩家在选项里看到的名字")
     T.eq(tw.L("ADDON_TITLE"), "施法容限", "zhTW 同名（该词繁简同形）")
     T.eq(en.L("ADDON_TITLE"), "Auto Spell Queue", "enUS 与 .toc 的 ## Title 一致")
+    T.eq(de.L("ADDON_TITLE"), "Auto Spell Queue", "deDE 与 .toc 的 ## Title-deDE 一致")
 
     -- .toc 的本地化标题必须与语言表同名，否则插件列表和设置页会显示两个名字
     -- （.toc 文本由 tools/run-tests.mjs 注入：fengari 里没有可用的 io.open）
@@ -86,20 +88,24 @@ T.test("插件显示名：中文界面必须是「施法容限」，英文界面
     local title = tocText:match("##%s*Title:%s*([^\r\n]+)")
     local titleZh = tocText:match("##%s*Title%-zhCN:%s*([^\r\n]+)")
     local titleTw = tocText:match("##%s*Title%-zhTW:%s*([^\r\n]+)")
+    local titleDe = tocText:match("##%s*Title%-deDE:%s*([^\r\n]+)")
     T.eq(title, en.L("ADDON_TITLE"), ".toc ## Title 与 enUS 显示名一致")
     T.eq(titleZh, zh.L("ADDON_TITLE"), ".toc ## Title-zhCN 与 zhCN 显示名一致")
     T.eq(titleTw, tw.L("ADDON_TITLE"), ".toc ## Title-zhTW 与 zhTW 显示名一致")
+    T.eq(titleDe, de.L("ADDON_TITLE"), ".toc ## Title-deDE 与 deDE 显示名一致")
+    T.truthy(tocText:match("##%s*Notes%-deDE:%s*[^\r\n]+"), "German addon-list description must exist")
 end)
 
-T.test("enUS / zhCN / zhTW 键集完全相同（契约第一条）", function()
+T.test("enUS / zhCN / zhTW / deDE 键集完全相同（契约第一条）", function()
     local en = SortedKeys(locales.enUS)
     CompareKeySets(SortedKeys(locales.zhCN), en, "zhCN")
     CompareKeySets(SortedKeys(locales.zhTW), en, "zhTW")
+    CompareKeySets(SortedKeys(locales.deDE), en, "deDE")
 end)
 
-T.test("三套表的每个值都是非空字符串", function()
+T.test("四套表的每个值都是非空字符串", function()
     local bad = {}
-    for _, name in ipairs({ "enUS", "zhCN", "zhTW" }) do
+    for _, name in ipairs({ "enUS", "zhCN", "zhTW", "deDE" }) do
         for key, value in pairs(locales[name]) do
             if type(value) ~= "string" or value == "" then
                 bad[#bad + 1] = name .. ":" .. tostring(key)
@@ -125,19 +131,21 @@ T.test("ns.L 对每个 enUS 键都返回非空字符串；未知键回退键名"
 end)
 
 T.test("未列出的客户端语言回退 enUS（契约第二条）", function()
-    local deDE = LoadLocale("deDE")
-    T.eq(type(deDE.L), "function")
-    for _, key in ipairs({ "ADDON_TITLE", "SETTING_ENABLED", "STATE_ERROR", "MSG_RESET_DONE" }) do
-        T.eq(deDE.L(key), locales.enUS[key], "deDE 应回退 enUS: " .. key)
+    for _, name in ipairs({ "frFR", "ruRU", "enGB" }) do
+        local loaded = LoadLocale(name)
+        T.eq(type(loaded.L), "function")
+        for _, key in ipairs(fallbackKeys) do
+            T.eq(loaded.L(key), locales.enUS[key], name .. " should fall back to enUS: " .. key)
+        end
+        T.eq(loaded.L("__NO_SUCH_KEY__"), "__NO_SUCH_KEY__")
     end
-    T.eq(deDE.L("__NO_SUCH_KEY__"), "__NO_SUCH_KEY__")
 end)
 
-T.test("zhCN / zhTW 使用各自的表，缺键时才回退 enUS（契约第三、四条）", function()
-    for _, name in ipairs({ "zhCN", "zhTW" }) do
+T.test("zhCN / zhTW / deDE 使用各自的表，缺键时才回退 enUS（契约第三、四条）", function()
+    for _, name in ipairs({ "zhCN", "zhTW", "deDE" }) do
         local loaded = LoadLocale(name)
         T.eq(loaded.LOCALE, name, "客户端语言为 " .. name .. " 时应选中该表")
-        for _, key in ipairs({ "ADDON_TITLE", "SETTING_ENABLED", "SLASH_CMD_STATUS" }) do
+        for _, key in ipairs(fallbackKeys) do
             T.eq(loaded.L(key), locales[name][key], name .. " 应返回自己的文本: " .. key)
         end
 
@@ -148,6 +156,30 @@ T.test("zhCN / zhTW 使用各自的表，缺键时才回退 enUS（契约第三�
         T.eq(loaded.L(probe), locales.enUS[probe], name .. " 缺键时必须回退 enUS")
         T.eq(loaded.L("__NO_SUCH_KEY__"), "__NO_SUCH_KEY__")
         loaded.LOCALES[name][probe] = saved
+    end
+end)
+
+T.test("deDE returns German settings, status and chat text", function()
+    local de = LoadLocale("deDE")
+    T.eq(de.L("SETTING_ENABLED"), "Automatische Anpassung aktivieren")
+    T.eq(de.L("STATE_ERROR"), "Schreibfehler")
+    T.eq(de.L("CHAT_ERROR"):format("Test"), "Schreiben fehlgeschlagen: Test")
+    T.eq(de.L("FORMULA_ADAPTIVE"):format(180, 150, 100, 80),
+        "180 ms = max(Basis 150, Latenz 100 + Reserve 80)")
+end)
+
+T.test("all translations preserve the English format specifiers in order", function()
+    local function FormatSignature(value)
+        local tokens = {}
+        for token in value:gmatch("%%[%d%.%-+ #]*[a-zA-Z%%]") do
+            if token ~= "%%" then tokens[#tokens + 1] = token end
+        end
+        return table.concat(tokens, ",")
+    end
+    for key, english in pairs(locales.enUS) do
+        for _, name in ipairs({ "zhCN", "zhTW", "deDE" }) do
+            T.eq(FormatSignature(locales[name][key]), FormatSignature(english), name .. ":" .. key)
+        end
     end
 end)
 

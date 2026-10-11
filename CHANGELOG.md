@@ -6,6 +6,20 @@
 
 ---
 
+## Unreleased
+
+### 中文
+
+- 新增德语界面（`deDE`）：设置、悬停提示、状态、聊天与命令帮助，以及插件列表简介。
+- 语言测试覆盖四套完整键表、德语选择、英文回退及格式占位符一致性。
+
+### English
+
+- Added German (`deDE`) translations for settings, tooltips, status, chat, command help and the addon-list description.
+- Locale tests cover all four complete key sets, German selection, English fallback and matching format specifiers.
+
+---
+
 ## v2.0.0 — 2026-09-28
 
 > 尚未对外发布。发布规划见 [`docs/CURSEFORGE.md`](docs/CURSEFORGE.md)，玩家向全文见 [`docs/DESCRIPTION.md`](docs/DESCRIPTION.md)。

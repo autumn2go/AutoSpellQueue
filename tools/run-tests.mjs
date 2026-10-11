@@ -11,6 +11,7 @@
  *
  *   node tools/run-tests.mjs              # everything
  *   node tools/run-tests.mjs spec_cvar    # only specs whose name matches
+ *   node tools/run-tests.mjs --locale=deDE # exercise the UI in German
  *
  * Exit code 0 = green, 1 = failure (or a Lua error while loading).
  */
@@ -52,6 +53,7 @@ const SPEC_PRIORITY = ["spec_formula.lua", "spec_cvar.lua", "spec_core.lua"];
 
 const filter = process.argv.slice(2).find((arg) => !arg.startsWith("-")) ?? null;
 const listOnly = process.argv.includes("--list-specs");
+const clientLocale = process.argv.slice(2).find((arg) => arg.startsWith("--locale="))?.slice(9) ?? "enUS";
 
 /* ------------------------------------------------------------------- paths -- */
 
@@ -170,6 +172,7 @@ if (specs.length === 0) {
 
 console.log("AutoSpellQueue 测试运行器 (fengari / Lua 5.3)");
 console.log(`  根目录 : ${ROOT}`);
+console.log(`  locale : ${clientLocale}`);
 console.log(`  被测文件 (${ADDON_FILES.length}):`);
 for (const file of ADDON_FILES) {
   const full = path.join(ROOT, file);
@@ -190,6 +193,10 @@ if (filter) setGlobalString(L, "ASQ_TEST_FILTER", filter);
 
 const stubError = runFile(L, path.join(ROOT, "tests", "wow_stub.lua"));
 if (stubError) fatal(`tests/wow_stub.lua 加载失败:\n${stubError}`);
+lua.lua_getglobal(L, to_luastring("AutoSpellQueueStub"));
+lua.lua_pushstring(L, to_luastring(clientLocale));
+lua.lua_setfield(L, -2, to_luastring("locale"));
+lua.lua_pop(L, 1);
 
 lua.lua_newtable(L);
 const nsIndex = lua.lua_gettop(L);

@@ -5,7 +5,7 @@
 坦克、治疗、近战、远程——每个**专精**的节奏都不一样，插件给每个专精各自的**施法容限**（`SpellQueueWindow`）
 基准值，再用**算法**叠上你的延迟。不是固定数字，也不用你手动调；面板只有两个复选框，关闭时**把你自己原来的值还回去**。
 
-> 正式服 12.x（12.0.0–12.1.5）· v2.0.0 · MIT · 界面语言 enUS / zhCN / zhTW
+> 正式服 12.x（12.0.0–12.1.5）· v2.0.0 · MIT · 界面语言 enUS / zhCN / zhTW / deDE
 > 原名 `Tate_ASQ`（Tate's AutoSpellQueue），v2.0.0 起更名为 **AutoSpellQueue**。
 > **中文界面显示为「施法容限」**（插件列表、设置页标题、聊天提示都是这个名字），英文界面为 `Auto Spell Queue`。
 
@@ -109,7 +109,7 @@ pwsh tools/verify.ps1 -Package  # 追加：dist/AutoSpellQueue-<version>.zip
 
 ```
 AutoSpellQueue.toc            # 插件清单（版本号唯一权威出处）
-AutoSpellQueue_Locale.lua     # enUS/zhCN/zhTW 三语键表（同一张源表生成，键数由用例保证一致）
+AutoSpellQueue_Locale.lua     # enUS/zhCN/zhTW/deDE 四语键表（同一张源表生成，键数由用例保证一致）
 AutoSpellQueue_Formula.lua    # 纯计算：专精/延迟/场景 → 目标值（无 WoW API）
 AutoSpellQueue_Latency.lua    # 纯算法：延迟平滑、抖动、采样策略（无 WoW API）
 AutoSpellQueue_CVar.lua       # 唯一读写 SpellQueueWindow 的地方（写入带读回校验）
@@ -134,7 +134,7 @@ Tanks, healers, melee and ranged - every **spec** plays differently, so every sp
 **spell queue window** (`SpellQueueWindow`) baseline, and an **algorithm** folds in your latency. No fixed number
 and no manual tuning; two checkboxes, and **your own value** comes back when it stops managing the setting.
 
-> Retail 12.x (12.0.0-12.1.5) · v2.0.0 · MIT · UI languages enUS / zhCN / zhTW
+> Retail 12.x (12.0.0-12.1.5) · v2.0.0 · MIT · UI languages enUS / zhCN / zhTW / deDE
 > Formerly `Tate_ASQ` (Tate's AutoSpellQueue); renamed to **AutoSpellQueue** in v2.0.0.
 > **On a Chinese client it shows as 「施法容限」** (addon list, settings page title and chat notices all use that name); on an English client it is `Auto Spell Queue`.
 
@@ -234,7 +234,7 @@ pwsh tools/verify.ps1 -Package  # also builds dist/AutoSpellQueue-<version>.zip
 
 ```
 AutoSpellQueue.toc            # addon manifest (the only authority for the version)
-AutoSpellQueue_Locale.lua     # enUS/zhCN/zhTW key table (one source table; a spec keeps all three in step)
+AutoSpellQueue_Locale.lua     # enUS/zhCN/zhTW/deDE key table (one source table; a spec keeps all four in step)
 AutoSpellQueue_Formula.lua    # pure math: spec/latency/context -> target value (no WoW API)
 AutoSpellQueue_Latency.lua    # pure algorithm: smoothing, jitter, sampling policy (no WoW API)
 AutoSpellQueue_CVar.lua       # the only place SpellQueueWindow is read/written (writes are verified by read-back)
